@@ -10,3 +10,4 @@ const string = "HelloWorld!";
 for (let i = 0; i<string.length; i++)
   view[i] = string.charCodeAt(i);
 PosixSocket.send(sockfd, buffer, string.length*view.BYTES_PER_ELEMENT, 0);
+PosixSocket.close(sockfd);

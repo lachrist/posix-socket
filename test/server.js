@@ -11,3 +11,5 @@ console.log("connection accepted from", address);
 const buffer = new ArrayBuffer(100);
 const size = PosixSocket.recv(sockfd1, buffer, buffer.byteLength, 0);
 console.log("got: <"+String.fromCharCode.apply(null, new Uint16Array(buffer, 0, size))+">");
+PosixSocket.close(sockfd);
+require("fs").unlinkSync("/tmp/yo.sock");
