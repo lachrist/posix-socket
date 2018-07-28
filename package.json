@@ -1,0 +1,22 @@
+{
+  "name": "aran",
+  "description": "POSIX Socket API on nodeJS",
+  "version": "0.0.0",
+  "author": {
+    "name": "Laurent Christophe",
+    "email": "lachrist@vub.ac.be"
+  },
+  "main": "./src/main.js",
+  "repository": "lachrist/posix-socket",
+  "homepage": "http://github.com/lachrist/posix-socket",
+  "license": "MIT",
+  "keywords": [
+    "POSIX",
+    "Socket",
+    "C++",
+    "Addon",
+    "Synchronous",
+    "Low-Level"
+  ],
+  "gypfile": true
+}
