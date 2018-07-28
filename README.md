@@ -1,4 +1,4 @@
-# posix-socket
+# PosixSocket
 
 This npm module makes the POSIX Socket API available to node with minimal changes.
 
