@@ -32,6 +32,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 #include <arpa/inet.h>
 #include <iostream>
 #include <node.h>
@@ -430,26 +432,399 @@ void Initialize(v8::Local<v8::Object> exports) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
   v8::Local<v8::Context> context = isolate->GetEnteredContext();
 
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "AF_LOCAL"), v8::Integer::New(isolate, AF_LOCAL)).FromJust();
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "AF_UNIX"), v8::Integer::New(isolate, AF_UNIX)).FromJust();
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "AF_INET"), v8::Integer::New(isolate, AF_INET)).FromJust();
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "AF_INET6"), v8::Integer::New(isolate, AF_INET6)).FromJust();
+  // Address Family -- http://man7.org/linux/man-pages/man2/socket.2.html //
+  #ifdef AF_UNIX
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "AF_UNIX"), v8::Integer::New(isolate, AF_UNIX)).FromJust();
+  #endif
+  #ifdef AF_LOCAL
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "AF_LOCAL"), v8::Integer::New(isolate, AF_LOCAL)).FromJust();
+  #endif
+  #ifdef AF_INET
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "AF_INET"), v8::Integer::New(isolate, AF_INET)).FromJust();
+  #endif
+  #ifdef AF_INET6
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "AF_INET6"), v8::Integer::New(isolate, AF_INET6)).FromJust();
+  #endif
 
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "SOCK_STREAM"), v8::Integer::New(isolate, SOCK_STREAM)).FromJust();
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "SOCK_DGRAM"), v8::Integer::New(isolate, SOCK_DGRAM)).FromJust();
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "SOCK_SEQPACKET"), v8::Integer::New(isolate, SOCK_SEQPACKET)).FromJust();
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "SOCK_RAW"), v8::Integer::New(isolate, SOCK_RAW)).FromJust();
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "SOCK_RDM"), v8::Integer::New(isolate, SOCK_RDM)).FromJust();
+  // Socket Type -- http://man7.org/linux/man-pages/man2/socket.2.html //
+  #ifdef SOCK_STREAM
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SOCK_STREAM"), v8::Integer::New(isolate, SOCK_STREAM)).FromJust();
+  #endif
+  #ifdef SOCK_DGRAM
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SOCK_DGRAM"), v8::Integer::New(isolate, SOCK_DGRAM)).FromJust();
+  #endif
+  #ifdef SOCK_SEQPACKET
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SOCK_SEQPACKET"), v8::Integer::New(isolate, SOCK_SEQPACKET)).FromJust();
+  #endif
+  #ifdef SOCK_RAW
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SOCK_RAW"), v8::Integer::New(isolate, SOCK_RAW)).FromJust();
+  #endif
 
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_DONTWAIT"), v8::Integer::New(isolate, MSG_DONTWAIT)).FromJust();
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_OOB"), v8::Integer::New(isolate, MSG_OOB)).FromJust();
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_PEEK"), v8::Integer::New(isolate, MSG_PEEK)).FromJust();
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_TRUNC"), v8::Integer::New(isolate, MSG_TRUNC)).FromJust();
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_WAITALL"), v8::Integer::New(isolate, MSG_WAITALL)).FromJust();
+  // Send Flags -- http://man7.org/linux/man-pages/man2/send.2.html //
+  #ifdef MSG_CONFIRM
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_CONFIRM"), v8::Integer::New(isolate, MSG_CONFIRM)).FromJust();
+  #endif
+  #ifdef MSG_DONTROUTE
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_DONTROUTE"), v8::Integer::New(isolate, MSG_DONTROUTE)).FromJust();
+  #endif
+  #ifdef MSG_DONTWAIT
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_DONTWAIT"), v8::Integer::New(isolate, MSG_DONTWAIT)).FromJust();
+  #endif
+  #ifdef MSG_EOR
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_EOR"), v8::Integer::New(isolate, MSG_EOR)).FromJust();
+  #endif
+  #ifdef MSG_MORE
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_MORE"), v8::Integer::New(isolate, MSG_MORE)).FromJust();
+  #endif
+  #ifdef MSG_NOSIGNAL
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_NOSIGNAL"), v8::Integer::New(isolate, MSG_NOSIGNAL)).FromJust();
+  #endif
+  #ifdef MSG_OOB
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_OOB"), v8::Integer::New(isolate, MSG_OOB)).FromJust();
+  #endif
 
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "SHUT_WR"), v8::Integer::New(isolate, SHUT_WR)).FromJust();
-  exports->Set(context, v8::String::NewFromUtf8(isolate, "SHUT_RDWR"), v8::Integer::New(isolate, SHUT_RDWR)).FromJust();
+  // Recv Flags -- http://man7.org/linux/man-pages/man2/recv.2.html //
+  #ifdef MSG_CMSG_CLOEXEC
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_CMSG_CLOEXEC"), v8::Integer::New(isolate, MSG_CMSG_CLOEXEC)).FromJust();
+  #endif
+  #ifdef MSG_DONTWAIT
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_DONTWAIT"), v8::Integer::New(isolate, MSG_DONTWAIT)).FromJust();
+  #endif
+  #ifdef MSG_ERRQUEUE
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_ERRQUEUE"), v8::Integer::New(isolate, MSG_ERRQUEUE)).FromJust();
+  #endif
+  #ifdef MSG_OOB
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_OOB"), v8::Integer::New(isolate, MSG_OOB)).FromJust();
+  #endif
+  #ifdef MSG_PEEK
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_PEEK"), v8::Integer::New(isolate, MSG_PEEK)).FromJust();
+  #endif
+  #ifdef MSG_TRUNC
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_TRUNC"), v8::Integer::New(isolate, MSG_TRUNC)).FromJust();
+  #endif
+  #ifdef MSG_WAITALL
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "MSG_WAITALL"), v8::Integer::New(isolate, MSG_WAITALL)).FromJust();
+  #endif
 
+  // Shutdown Flags -- http://man7.org/linux/man-pages/man2/shutdown.2.html //
+  #ifdef SHUT_RD
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SHUT_RD"), v8::Integer::New(isolate, SHUT_RD)).FromJust();
+  #endif
+  #ifdef SHUT_WR
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SHUT_WR"), v8::Integer::New(isolate, SHUT_WR)).FromJust();
+  #endif
+  #ifdef SHUT_RDWR
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SHUT_RDWR"), v8::Integer::New(isolate, SHUT_RDWR)).FromJust();
+  #endif
+
+ // Socket-Level Options -- http://man7.org/linux/man-pages/man7/socket.7.html
+  #ifdef SOL_SOCKET
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SOL_SOCKET"), v8::Integer::New(isolate, SOL_SOCKET)).FromJust();
+  #endif
+  #ifdef SO_ACCEPTCONN
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_ACCEPTCONN"), v8::Integer::New(isolate, SO_ACCEPTCONN)).FromJust();
+  #endif
+  #ifdef SO_ATTACH_FILTER
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_ATTACH_FILTER"), v8::Integer::New(isolate, SO_ATTACH_FILTER)).FromJust();
+  #endif
+  #ifdef SO_ATTACH_REUSEPORT_CBPF
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_ATTACH_REUSEPORT_CBPF"), v8::Integer::New(isolate, SO_ATTACH_REUSEPORT_CBPF)).FromJust();
+  #endif
+  #ifdef SO_ATTACH_REUSEPORT_EBPF
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_ATTACH_REUSEPORT_EBPF"), v8::Integer::New(isolate, SO_ATTACH_REUSEPORT_EBPF)).FromJust();
+  #endif
+  #ifdef SO_BINDTODEVICE
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_BINDTODEVICE"), v8::Integer::New(isolate, SO_BINDTODEVICE)).FromJust();
+  #endif
+  #ifdef SO_BROADCAST
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_BROADCAST"), v8::Integer::New(isolate, SO_BROADCAST)).FromJust();
+  #endif
+  #ifdef SO_BSDCOMPAT
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_BSDCOMPAT"), v8::Integer::New(isolate, SO_BSDCOMPAT)).FromJust();
+  #endif
+  #ifdef SO_DEBUG
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_DEBUG"), v8::Integer::New(isolate, SO_DEBUG)).FromJust();
+  #endif
+  #ifdef SO_DETACH_FILTER
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_DETACH_FILTER"), v8::Integer::New(isolate, SO_DETACH_FILTER)).FromJust();
+  #endif
+  #ifdef SO_DOMAIN
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_DOMAIN"), v8::Integer::New(isolate, SO_DOMAIN)).FromJust();
+  #endif
+  #ifdef SO_ERROR
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_ERROR"), v8::Integer::New(isolate, SO_ERROR)).FromJust();
+  #endif
+  #ifdef SO_DONTROUTE
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_DONTROUTE"), v8::Integer::New(isolate, SO_DONTROUTE)).FromJust();
+  #endif
+  #ifdef SO_INCOMING_CPU
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_INCOMING_CPU"), v8::Integer::New(isolate, SO_INCOMING_CPU)).FromJust();
+  #endif
+  #ifdef SO_KEEPALIVE
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_KEEPALIVE"), v8::Integer::New(isolate, SO_KEEPALIVE)).FromJust();
+  #endif
+  #ifdef SO_LINGER
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_LINGER"), v8::Integer::New(isolate, SO_LINGER)).FromJust();
+  #endif
+  #ifdef SO_LOCK_FILTER
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_LOCK_FILTER"), v8::Integer::New(isolate, SO_LOCK_FILTER)).FromJust();
+  #endif
+  #ifdef SO_MARK
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_MARK"), v8::Integer::New(isolate, SO_MARK)).FromJust();
+  #endif
+  #ifdef SO_OOBINLINE
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_OOBINLINE"), v8::Integer::New(isolate, SO_OOBINLINE)).FromJust();
+  #endif
+  #ifdef SO_PASSCRED
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_PASSCRED"), v8::Integer::New(isolate, SO_PASSCRED)).FromJust();
+  #endif
+  #ifdef SO_PEEK_OFF
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_PEEK_OFF"), v8::Integer::New(isolate, SO_PEEK_OFF)).FromJust();
+  #endif
+  #ifdef SO_PEERCRED
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_PEERCRED"), v8::Integer::New(isolate, SO_PEERCRED)).FromJust();
+  #endif
+  #ifdef SO_PRIORITY
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_PRIORITY"), v8::Integer::New(isolate, SO_PRIORITY)).FromJust();
+  #endif
+  #ifdef SO_PROTOCOL
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_PROTOCOL"), v8::Integer::New(isolate, SO_PROTOCOL)).FromJust();
+  #endif
+  #ifdef SO_RCVBUF
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_RCVBUF"), v8::Integer::New(isolate, SO_RCVBUF)).FromJust();
+  #endif
+  #ifdef SO_RCVBUFFORCE
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_RCVBUFFORCE"), v8::Integer::New(isolate, SO_RCVBUFFORCE)).FromJust();
+  #endif
+  #ifdef SO_RCVLOWAT
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_RCVLOWAT"), v8::Integer::New(isolate, SO_RCVLOWAT)).FromJust();
+  #endif
+  #ifdef SO_SNDLOWAT
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_SNDLOWAT"), v8::Integer::New(isolate, SO_SNDLOWAT)).FromJust();
+  #endif
+  #ifdef SO_RCVTIMEO
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_RCVTIMEO"), v8::Integer::New(isolate, SO_RCVTIMEO)).FromJust();
+  #endif
+  #ifdef SO_SNDTIMEO
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_SNDTIMEO"), v8::Integer::New(isolate, SO_SNDTIMEO)).FromJust();
+  #endif
+  #ifdef SO_REUSEADDR
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_REUSEADDR"), v8::Integer::New(isolate, SO_REUSEADDR)).FromJust();
+  #endif
+  #ifdef SO_REUSEPORT
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_REUSEPORT"), v8::Integer::New(isolate, SO_REUSEPORT)).FromJust();
+  #endif
+  #ifdef SO_RXQ_OVFL
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_RXQ_OVFL"), v8::Integer::New(isolate, SO_RXQ_OVFL)).FromJust();
+  #endif
+  #ifdef SO_SNDBUF
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_SNDBUF"), v8::Integer::New(isolate, SO_SNDBUF)).FromJust();
+  #endif
+  #ifdef SO_SNDBUFFORCE
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_SNDBUFFORCE"), v8::Integer::New(isolate, SO_SNDBUFFORCE)).FromJust();
+  #endif
+  #ifdef SO_TIMESTAMP
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_TIMESTAMP"), v8::Integer::New(isolate, SO_TIMESTAMP)).FromJust();
+  #endif
+  #ifdef SO_TYPE
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_TYPE"), v8::Integer::New(isolate, SO_TYPE)).FromJust();
+  #endif
+  #ifdef SO_BUSY_POLL
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "SO_BUSY_POLL"), v8::Integer::New(isolate, SO_BUSY_POLL)).FromJust();
+  #endif
+
+  // IP-Level Options -- http://man7.org/linux/man-pages/man7/ip.7.html //
+  #ifdef IPPROTO_IP
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPPROTO_IP"), v8::Integer::New(isolate, IPPROTO_IP)).FromJust();
+  #endif
+  #ifdef IP_ADD_MEMBERSHIP
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_ADD_MEMBERSHIP"), v8::Integer::New(isolate, IP_ADD_MEMBERSHIP)).FromJust();
+  #endif
+  #ifdef IP_ADD_SOURCE_MEMBERSHIP
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_ADD_SOURCE_MEMBERSHIP"), v8::Integer::New(isolate, IP_ADD_SOURCE_MEMBERSHIP)).FromJust();
+  #endif
+  #ifdef IP_BIND_ADDRESS_NO_PORT
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_BIND_ADDRESS_NO_PORT"), v8::Integer::New(isolate, IP_BIND_ADDRESS_NO_PORT)).FromJust();
+  #endif
+  #ifdef IP_BLOCK_SOURCE
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_BLOCK_SOURCE"), v8::Integer::New(isolate, IP_BLOCK_SOURCE)).FromJust();
+  #endif
+  #ifdef IP_DROP_MEMBERSHIP
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_DROP_MEMBERSHIP"), v8::Integer::New(isolate, IP_DROP_MEMBERSHIP)).FromJust();
+  #endif
+  #ifdef IP_DROP_SOURCE_MEMBERSHIP
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_DROP_SOURCE_MEMBERSHIP"), v8::Integer::New(isolate, IP_DROP_SOURCE_MEMBERSHIP)).FromJust();
+  #endif
+  #ifdef IP_FREEBIND
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_FREEBIND"), v8::Integer::New(isolate, IP_FREEBIND)).FromJust();
+  #endif
+  #ifdef IP_HDRINCL
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_HDRINCL"), v8::Integer::New(isolate, IP_HDRINCL)).FromJust();
+  #endif
+  #ifdef IP_MSFILTER
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_MSFILTER"), v8::Integer::New(isolate, IP_MSFILTER)).FromJust();
+  #endif
+  #ifdef IP_MTU
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_MTU"), v8::Integer::New(isolate, IP_MTU)).FromJust();
+  #endif
+  #ifdef IP_MTU_DISCOVER
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_MTU_DISCOVER"), v8::Integer::New(isolate, IP_MTU_DISCOVER)).FromJust();
+  #endif
+  #ifdef IP_MULTICAST_ALL
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_MULTICAST_ALL"), v8::Integer::New(isolate, IP_MULTICAST_ALL)).FromJust();
+  #endif
+  #ifdef IP_MULTICAST_IF
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_MULTICAST_IF"), v8::Integer::New(isolate, IP_MULTICAST_IF)).FromJust();
+  #endif
+  #ifdef IP_MULTICAST_LOOP
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_MULTICAST_LOOP"), v8::Integer::New(isolate, IP_MULTICAST_LOOP)).FromJust();
+  #endif
+  #ifdef IP_MULTICAST_TTL
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_MULTICAST_TTL"), v8::Integer::New(isolate, IP_MULTICAST_TTL)).FromJust();
+  #endif
+  #ifdef IP_NODEFRAG
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_NODEFRAG"), v8::Integer::New(isolate, IP_NODEFRAG)).FromJust();
+  #endif
+  #ifdef IP_OPTIONS
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_OPTIONS"), v8::Integer::New(isolate, IP_OPTIONS)).FromJust();
+  #endif
+  #ifdef IP_PKTINFO
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_PKTINFO"), v8::Integer::New(isolate, IP_PKTINFO)).FromJust();
+  #endif
+  #ifdef IP_RECVERR
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_RECVERR"), v8::Integer::New(isolate, IP_RECVERR)).FromJust();
+  #endif
+  #ifdef IP_RECVOPTS
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_RECVOPTS"), v8::Integer::New(isolate, IP_RECVOPTS)).FromJust();
+  #endif
+  #ifdef IP_RECVORIGDSTADDR
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_RECVORIGDSTADDR"), v8::Integer::New(isolate, IP_RECVORIGDSTADDR)).FromJust();
+  #endif
+  #ifdef IP_RECVTOS
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_RECVTOS"), v8::Integer::New(isolate, IP_RECVTOS)).FromJust();
+  #endif
+  #ifdef IP_RECVTTL
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_RECVTTL"), v8::Integer::New(isolate, IP_RECVTTL)).FromJust();
+  #endif
+  #ifdef IP_RETOPTS
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_RETOPTS"), v8::Integer::New(isolate, IP_RETOPTS)).FromJust();
+  #endif
+  #ifdef IP_ROUTER_ALERT
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_ROUTER_ALERT"), v8::Integer::New(isolate, IP_ROUTER_ALERT)).FromJust();
+  #endif
+  #ifdef IP_TOS
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_TOS"), v8::Integer::New(isolate, IP_TOS)).FromJust();
+  #endif
+  #ifdef IP_TRANSPARENT
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_TRANSPARENT"), v8::Integer::New(isolate, IP_TRANSPARENT)).FromJust();
+  #endif
+  #ifdef IP_TTL
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_TTL"), v8::Integer::New(isolate, IP_TTL)).FromJust();
+  #endif
+  #ifdef IP_UNBLOCK_SOURCE
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IP_UNBLOCK_SOURCE"), v8::Integer::New(isolate, IP_UNBLOCK_SOURCE)).FromJust();
+  #endif
+
+  // IPV6-Level Options -- http://man7.org/linux/man-pages/man7/ipv6.7.html //
+  #ifdef IPPROTO_IPV6
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPPROTO_IPV6"), v8::Integer::New(isolate, IPPROTO_IPV6)).FromJust();
+  #endif
+  #ifdef IPV6_ADDRFORM
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPV6_ADDRFORM"), v8::Integer::New(isolate, IPV6_ADDRFORM)).FromJust();
+  #endif
+  #ifdef IPV6_ADD_MEMBERSHIP
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPV6_ADD_MEMBERSHIP"), v8::Integer::New(isolate, IPV6_ADD_MEMBERSHIP)).FromJust();
+  #endif
+  #ifdef IPV6_DROP_MEMBERSHIP
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPV6_DROP_MEMBERSHIP"), v8::Integer::New(isolate, IPV6_DROP_MEMBERSHIP)).FromJust();
+  #endif
+  #ifdef IPV6_MTU
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPV6_MTU"), v8::Integer::New(isolate, IPV6_MTU)).FromJust();
+  #endif
+  #ifdef IPV6_MTU_DISCOVER
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPV6_MTU_DISCOVER"), v8::Integer::New(isolate, IPV6_MTU_DISCOVER)).FromJust();
+  #endif
+  #ifdef IPV6_MULTICAST_HOPS
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPV6_MULTICAST_HOPS"), v8::Integer::New(isolate, IPV6_MULTICAST_HOPS)).FromJust();
+  #endif
+  #ifdef IPV6_MULTICAST_IF
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPV6_MULTICAST_IF"), v8::Integer::New(isolate, IPV6_MULTICAST_IF)).FromJust();
+  #endif
+  #ifdef IPV6_MULTICAST_LOOP
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPV6_MULTICAST_LOOP"), v8::Integer::New(isolate, IPV6_MULTICAST_LOOP)).FromJust();
+  #endif
+  #ifdef IPV6_RECVPKTINFO
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPV6_RECVPKTINFO"), v8::Integer::New(isolate, IPV6_RECVPKTINFO)).FromJust();
+  #endif
+  #ifdef IPV6_RTHDR
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPV6_RTHDR"), v8::Integer::New(isolate, IPV6_RTHDR)).FromJust();
+  #endif
+  #ifdef IPV6_AUTHHDR
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPV6_AUTHHDR"), v8::Integer::New(isolate, IPV6_AUTHHDR)).FromJust();
+  #endif
+  #ifdef IPV6_DSTOPTS
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPV6_DSTOPTS"), v8::Integer::New(isolate, IPV6_DSTOPTS)).FromJust();
+  #endif
+  #ifdef IPV6_HOPOPTS
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPV6_HOPOPTS"), v8::Integer::New(isolate, IPV6_HOPOPTS)).FromJust();
+  #endif
+  #ifdef IPV6_FLOWINFO
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPV6_FLOWINFO"), v8::Integer::New(isolate, IPV6_FLOWINFO)).FromJust();
+  #endif
+  #ifdef IPV6_HOPLIMIT
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPV6_HOPLIMIT"), v8::Integer::New(isolate, IPV6_HOPLIMIT)).FromJust();
+  #endif
+
+  // TCP-Level Options -- http://man7.org/linux/man-pages/man7/tcp.7.html //
+  #ifdef IPPROTO_TCP
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPPROTO_TCP"), v8::Integer::New(isolate, IPPROTO_TCP)).FromJust();
+  #endif
+  #ifdef TCP_CORK
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "TCP_CORK"), v8::Integer::New(isolate, TCP_CORK)).FromJust();
+  #endif
+  #ifdef TCP_DEFER_ACCEPT
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "TCP_DEFER_ACCEPT"), v8::Integer::New(isolate, TCP_DEFER_ACCEPT)).FromJust();
+  #endif
+  #ifdef TCP_INFO
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "TCP_INFO"), v8::Integer::New(isolate, TCP_INFO)).FromJust();
+  #endif
+  #ifdef TCP_KEEPCNT
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "TCP_KEEPCNT"), v8::Integer::New(isolate, TCP_KEEPCNT)).FromJust();
+  #endif
+  #ifdef TCP_KEEPIDLE
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "TCP_KEEPIDLE"), v8::Integer::New(isolate, TCP_KEEPIDLE)).FromJust();
+  #endif
+  #ifdef TCP_KEEPINTVL
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "TCP_KEEPINTVL"), v8::Integer::New(isolate, TCP_KEEPINTVL)).FromJust();
+  #endif
+  #ifdef TCP_LINGER2
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "TCP_LINGER2"), v8::Integer::New(isolate, TCP_LINGER2)).FromJust();
+  #endif
+  #ifdef TCP_MAXSEG
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "TCP_MAXSEG"), v8::Integer::New(isolate, TCP_MAXSEG)).FromJust();
+  #endif
+  #ifdef TCP_NODELAY
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "TCP_NODELAY"), v8::Integer::New(isolate, TCP_NODELAY)).FromJust();
+  #endif
+  #ifdef TCP_QUICKACK
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "TCP_QUICKACK"), v8::Integer::New(isolate, TCP_QUICKACK)).FromJust();
+  #endif
+  #ifdef TCP_SYNCNT
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "TCP_SYNCNT"), v8::Integer::New(isolate, TCP_SYNCNT)).FromJust();
+  #endif
+  #ifdef TCP_WINDOW_CLAMP
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "TCP_WINDOW_CLAMP"), v8::Integer::New(isolate, TCP_WINDOW_CLAMP)).FromJust();
+  #endif
+
+  // UDP-Level Options -- http://man7.org/linux/man-pages/man7/udp.7.html//
+  #ifdef IPPROTO_UDP
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "IPPROTO_UDP"), v8::Integer::New(isolate, IPPROTO_UDP)).FromJust();
+  #endif
+  #ifdef UDP_CORK
+    exports->Set(context, v8::String::NewFromUtf8(isolate, "UDP_CORK"), v8::Integer::New(isolate, UDP_CORK)).FromJust();
+  #endif
+
+  // Methods //
   exports->Set(context, v8::String::NewFromUtf8(isolate, "socket"), v8::FunctionTemplate::New(isolate, Socket)->GetFunction()).FromJust();
   exports->Set(context, v8::String::NewFromUtf8(isolate, "bind"), v8::FunctionTemplate::New(isolate, Bind)->GetFunction()).FromJust();
   exports->Set(context, v8::String::NewFromUtf8(isolate, "connect"), v8::FunctionTemplate::New(isolate, Connect)->GetFunction()).FromJust();

@@ -1,4 +1,5 @@
 const PosixSocket = require("../lib/main.js");
+console.log(PosixSocket);
 const sockfd = PosixSocket.socket(PosixSocket.AF_UNIX, PosixSocket.SOCK_STREAM, 0);
 PosixSocket.connect(sockfd, {
   sun_family: PosixSocket.AF_UNIX,
