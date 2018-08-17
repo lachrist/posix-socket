@@ -103,7 +103,7 @@ int ObjectToAddress(v8::Object* object, sockaddr* address) {
       return ThrowMessageInt(isolate, "addr.sin6_port must be a Number", -1);
     if (!sin6_flowinfo->IsNumber())
       return ThrowMessageInt(isolate, "addr.sin6_flowinfo must be a Number", -1);
-    if (!sin6_flowinfo->IsString())
+    if (!sin6_addr->IsString())
       return ThrowMessageInt(isolate, "addr.sin6_addr must be a String", -1);
     if (!sin6_scope_id->IsNumber())
       return ThrowMessageInt(isolate, "addr.sin6_scope_id field must be a Number", -1);
