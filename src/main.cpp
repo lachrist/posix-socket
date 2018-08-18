@@ -61,7 +61,7 @@ int ThrowMessageInt (v8::Isolate* isolate, const char* message, int result) {
 }
 
 // Convert a JavaScript value to a sockaddr
-int ObjectToAddress(v8::Object* object, sockaddr* address) {
+int ObjectToAddress (v8::Object* object, sockaddr* address) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
   v8::Local<v8::Context> context = isolate->GetEnteredContext();
   if (object->Has(v8::String::NewFromUtf8(isolate, "sun_family"))) {
@@ -83,10 +83,12 @@ int ObjectToAddress(v8::Object* object, sockaddr* address) {
       return ThrowMessageInt(isolate, "addr.sin_family must be a Number", -1);
     if (!sin_port->IsNumber())
       return ThrowMessageInt(isolate, "addr.sin_port must be a Number", -1);
+    if (sin_port->Uint32Value() > UINT16_MAX)
+      return ThrowMessageInt(isolate, "addr.sin_port is superior to UINT16_MAX", -1);
     if (!sin_addr->IsString())
       return ThrowMessageInt(isolate, "addr.sin_addr must be a String", -1);
     ((struct sockaddr_in *) address)->sin_family = sin_family->Uint32Value();
-    ((struct sockaddr_in *) address)->sin_port = htonl(sin_port->Uint32Value());
+    ((struct sockaddr_in *) address)->sin_port = htons(sin_port->Uint32Value());
     if (inet_pton(AF_INET, *v8::String::Utf8Value(isolate, sin_addr), &(((struct sockaddr_in *) address)->sin_addr)) == 0)
       return ThrowMessageInt(isolate, "addr.sin_addr could not be parsed", -1);
     return sizeof(sockaddr_in);
@@ -101,18 +103,21 @@ int ObjectToAddress(v8::Object* object, sockaddr* address) {
       return ThrowMessageInt(isolate, "addr.sin6_family must be a Number", -1);
     if (!sin6_port->IsNumber())
       return ThrowMessageInt(isolate, "addr.sin6_port must be a Number", -1);
+    if (sin6_port->Uint32Value() > UINT16_MAX)
+      return ThrowMessageInt(isolate, "addr.sin6_port is superior to UINT16_MAX", -1);
     if (!sin6_flowinfo->IsNumber())
       return ThrowMessageInt(isolate, "addr.sin6_flowinfo must be a Number", -1);
     if (!sin6_addr->IsString())
       return ThrowMessageInt(isolate, "addr.sin6_addr must be a String", -1);
     if (!sin6_scope_id->IsNumber())
-      return ThrowMessageInt(isolate, "addr.sin6_scope_id field must be a Number", -1);
+      return ThrowMessageInt(isolate, "addr.sin6_scope_id must be a Number", -1);
     ((struct sockaddr_in6 *) address)->sin6_family = sin6_family->Uint32Value();
-    ((struct sockaddr_in6 *) address)->sin6_port = htonl(sin6_port->Uint32Value());
+    ((struct sockaddr_in6 *) address)->sin6_port = htons(sin6_port->Uint32Value());
     ((struct sockaddr_in6 *) address)->sin6_flowinfo = sin6_flowinfo->Uint32Value();
-    if (inet_pton(AF_INET, *v8::String::Utf8Value(isolate, sin6_addr), &(((struct sockaddr_in6 *) address)->sin6_addr)) == 0)
-      return ThrowMessageInt(isolate, "addr.sin_addr could not be parsed", -1);
+    if (inet_pton(AF_INET6, *v8::String::Utf8Value(isolate, sin6_addr), &(((struct sockaddr_in6 *) address)->sin6_addr)) == 0)
+      return ThrowMessageInt(isolate, "addr.sin6_addr could not be parsed", -1);
     ((struct sockaddr_in6 *) address)->sin6_scope_id = sin6_scope_id->Uint32Value();
+    return sizeof(sockaddr_in6);
   }
   return ThrowMessageInt(isolate, "addr must contain either sun_family, sin_family, or sin6_family", -1);
 };
@@ -127,7 +132,7 @@ void AddressToObject (sockaddr* address, v8::Object* object) {
     object->Set(context, v8::String::NewFromUtf8(isolate, "sun_path"), v8::String::NewFromUtf8(isolate, sun_path)).FromJust();
   } else if (address->sa_family == AF_INET) {
     sa_family_t sin_family = ((struct sockaddr_in*) address)->sin_family;
-    in_port_t sin_port = ntohl(((struct sockaddr_in*) address)->sin_port);
+    in_port_t sin_port = ntohs(((struct sockaddr_in*) address)->sin_port);
     char sin_addr[20];
     if (inet_ntop(AF_INET, &((struct sockaddr_in*) address)->sin_addr, sin_addr, 20) == NULL) {
       ThrowErrno(isolate);
@@ -138,7 +143,7 @@ void AddressToObject (sockaddr* address, v8::Object* object) {
     }
   } else if (address->sa_family == AF_INET6) {
     sa_family_t sin6_family = ((struct sockaddr_in6*) address)->sin6_family;
-    in_port_t sin6_port = ntohl(((struct sockaddr_in6*) address)->sin6_port);
+    in_port_t sin6_port = ntohs(((struct sockaddr_in6*) address)->sin6_port);
     uint32_t sin6_flowinfo = ((struct sockaddr_in6*) address)->sin6_flowinfo;
     char sin6_addr[50];
     if (inet_ntop(AF_INET6, &((struct sockaddr_in6*) address)->sin6_addr, sin6_addr, 50) == NULL) {
@@ -155,6 +160,14 @@ void AddressToObject (sockaddr* address, v8::Object* object) {
     ThrowMessage(isolate, "only the following address families are supported: AF_UNIX, AF_LOCAL, AF_INET and, AF_INET6");
   }
 }
+
+// void TEST_IDENTITY (const v8::FunctionCallbackInfo<v8::Value>& info) {
+//   v8::Isolate* isolate = info.GetIsolate();
+//   sockaddr* address = (sockaddr*) malloc(max_length);
+//   ObjectToAddress(v8::Object::Cast(*info[0]), address);
+//   AddressToObject(address, v8::Object::Cast(*info[1]));
+//   free(address);
+// };
 
 // http://man7.org/linux/man-pages/man2/socket.2.html
 // int socket(int domain, int type, int protocol);
@@ -224,7 +237,7 @@ void Listen (const v8::FunctionCallbackInfo<v8::Value>& info) {
     return ThrowMessage(isolate, "sockfd must be a Number");
   if (!info[1]->IsNumber())
     return ThrowMessage(isolate, "backlog must be a Number");
-  if (listen(info[0]->Int32Value(), info[0]->Int32Value()) == -1) {
+  if (listen(info[0]->Int32Value(), info[1]->Int32Value()) == -1) {
     ThrowErrno(isolate);
   }
 }

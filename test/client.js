@@ -1,10 +1,7 @@
 const PosixSocket = require("../lib/main.js");
-console.log(PosixSocket);
-const sockfd = PosixSocket.socket(PosixSocket.AF_UNIX, PosixSocket.SOCK_STREAM, 0);
-PosixSocket.connect(sockfd, {
-  sun_family: PosixSocket.AF_UNIX,
-  sun_path: "/tmp/yo.sock"
-});
+const Addresses = require("./addresses.js");
+const sockfd = PosixSocket.socket(PosixSocket[process.argv[2]], PosixSocket.SOCK_STREAM, 0);
+PosixSocket.connect(sockfd, Addresses[process.argv[2]](process.argv[3]));
 const buffer = new ArrayBuffer(100);
 const view = new Uint16Array(buffer, 0, buffer.length);
 const string = "HelloWorld!";
