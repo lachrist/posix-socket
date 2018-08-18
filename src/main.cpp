@@ -398,7 +398,7 @@ void Shutdown (const v8::FunctionCallbackInfo<v8::Value>& info) {
 // int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
 void Getsockopt (const v8::FunctionCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
-  if (info.Length() != 1)
+  if (info.Length() != 2)
     return ThrowMessage(isolate, "getsockopt(sockfd, level, optname) expects 3 argument");
   if (!info[0]->IsNumber())
     return ThrowMessage(isolate, "sockfd must be a Number");
@@ -419,8 +419,8 @@ void Getsockopt (const v8::FunctionCallbackInfo<v8::Value>& info) {
 // int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
 void Setsockopt (const v8::FunctionCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
-  if (info.Length() != 1)
-    return ThrowMessage(isolate, "getsockopt(sockfd, level, optname, optval) expects 3 argument");
+  if (info.Length() != 4)
+    return ThrowMessage(isolate, "getsockopt(sockfd, level, optname, optval) expects 4 argument");
   if (!info[0]->IsNumber())
     return ThrowMessage(isolate, "sockfd must be a Number");
   if (!info[1]->IsNumber())

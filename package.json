@@ -1,7 +1,7 @@
 {
   "name": "posix-socket",
   "description": "POSIX Socket API on nodeJS",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "author": {
     "name": "Laurent Christophe",
     "email": "lachrist@vub.ac.be"
