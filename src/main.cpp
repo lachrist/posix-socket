@@ -43,11 +43,11 @@ static size_t max_length;
 void ThrowErrno (v8::Isolate* isolate) {
   char string[100];
   snprintf(string, 100, "ERRNO %i: %s", errno, std::strerror(errno));
-  isolate->ThrowException(v8::String::NewFromUtf8(isolate, string));
+  isolate->ThrowException(v8::Exception::Error(v8::String::NewFromUtf8(isolate, string)));
 }
 
 void ThrowMessage (v8::Isolate* isolate, const char* message) {
-  isolate->ThrowException(v8::String::NewFromUtf8(isolate, message));
+  isolate->ThrowException(v8::Exception::Error(v8::String::NewFromUtf8(isolate, message)));
 }
 
 int ThrowErrnoInt (v8::Isolate* isolate, int result) {

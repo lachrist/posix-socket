@@ -1,3 +1,4 @@
+
 rm /tmp/posix-socket-test
 node server.js AF_LOCAL /tmp/posix-socket-test &
 sleep 1
