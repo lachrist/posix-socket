@@ -71,7 +71,7 @@ int ObjectToAddress (v8::Object* object, sockaddr* address) {
       return ThrowMessageInt(isolate, "addr.sun_family must be a Number", -1);
     if (!sun_path->IsString())
       return ThrowMessageInt(isolate, "addr.sun_path must be a String", -1);
-    ((struct sockaddr_un *) address)->sun_family = sun_family->Uint32Value();
+    ((struct sockaddr_un *) address)->sun_family = sun_family->Uint32Value(context).FromMaybe(0);
     strncpy(((struct sockaddr_un *) address)->sun_path, *v8::String::Utf8Value(isolate, sun_path), sizeof(((sockaddr_un*)0)->sun_path));
     return sizeof(sockaddr_un);
   }
@@ -83,12 +83,12 @@ int ObjectToAddress (v8::Object* object, sockaddr* address) {
       return ThrowMessageInt(isolate, "addr.sin_family must be a Number", -1);
     if (!sin_port->IsNumber())
       return ThrowMessageInt(isolate, "addr.sin_port must be a Number", -1);
-    if (sin_port->Uint32Value() > UINT16_MAX)
+    if (sin_port->Uint32Value(context).FromMaybe(0) > UINT16_MAX)
       return ThrowMessageInt(isolate, "addr.sin_port is superior to UINT16_MAX", -1);
     if (!sin_addr->IsString())
       return ThrowMessageInt(isolate, "addr.sin_addr must be a String", -1);
-    ((struct sockaddr_in *) address)->sin_family = sin_family->Uint32Value();
-    ((struct sockaddr_in *) address)->sin_port = htons(sin_port->Uint32Value());
+    ((struct sockaddr_in *) address)->sin_family = sin_family->Uint32Value(context).FromMaybe(0);
+    ((struct sockaddr_in *) address)->sin_port = htons(sin_port->Uint32Value(context).FromMaybe(0));
     if (inet_pton(AF_INET, *v8::String::Utf8Value(isolate, sin_addr), &(((struct sockaddr_in *) address)->sin_addr)) == 0)
       return ThrowMessageInt(isolate, "addr.sin_addr could not be parsed", -1);
     return sizeof(sockaddr_in);
@@ -103,7 +103,7 @@ int ObjectToAddress (v8::Object* object, sockaddr* address) {
       return ThrowMessageInt(isolate, "addr.sin6_family must be a Number", -1);
     if (!sin6_port->IsNumber())
       return ThrowMessageInt(isolate, "addr.sin6_port must be a Number", -1);
-    if (sin6_port->Uint32Value() > UINT16_MAX)
+    if (sin6_port->Uint32Value(context).FromMaybe(0) > UINT16_MAX)
       return ThrowMessageInt(isolate, "addr.sin6_port is superior to UINT16_MAX", -1);
     if (!sin6_flowinfo->IsNumber())
       return ThrowMessageInt(isolate, "addr.sin6_flowinfo must be a Number", -1);
@@ -111,12 +111,12 @@ int ObjectToAddress (v8::Object* object, sockaddr* address) {
       return ThrowMessageInt(isolate, "addr.sin6_addr must be a String", -1);
     if (!sin6_scope_id->IsNumber())
       return ThrowMessageInt(isolate, "addr.sin6_scope_id must be a Number", -1);
-    ((struct sockaddr_in6 *) address)->sin6_family = sin6_family->Uint32Value();
-    ((struct sockaddr_in6 *) address)->sin6_port = htons(sin6_port->Uint32Value());
-    ((struct sockaddr_in6 *) address)->sin6_flowinfo = sin6_flowinfo->Uint32Value();
+    ((struct sockaddr_in6 *) address)->sin6_family = sin6_family->Uint32Value(context).FromMaybe(0);
+    ((struct sockaddr_in6 *) address)->sin6_port = htons(sin6_port->Uint32Value(context).FromMaybe(0));
+    ((struct sockaddr_in6 *) address)->sin6_flowinfo = sin6_flowinfo->Uint32Value(context).FromMaybe(0);
     if (inet_pton(AF_INET6, *v8::String::Utf8Value(isolate, sin6_addr), &(((struct sockaddr_in6 *) address)->sin6_addr)) == 0)
       return ThrowMessageInt(isolate, "addr.sin6_addr could not be parsed", -1);
-    ((struct sockaddr_in6 *) address)->sin6_scope_id = sin6_scope_id->Uint32Value();
+    ((struct sockaddr_in6 *) address)->sin6_scope_id = sin6_scope_id->Uint32Value(context).FromMaybe(0);
     return sizeof(sockaddr_in6);
   }
   return ThrowMessageInt(isolate, "addr must contain either sun_family, sin_family, or sin6_family", -1);
@@ -173,6 +173,7 @@ void AddressToObject (sockaddr* address, v8::Object* object) {
 // int socket(int domain, int type, int protocol);
 void Socket(const v8::FunctionCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = info.GetIsolate();
+  v8::Local<v8::Context> context = isolate->GetEnteredContext();
   if (info.Length() != 3)
     return ThrowMessage(isolate, "socket(domain, type, protocol) expects 3 arguments");
   if (!info[0]->IsNumber())
@@ -181,7 +182,7 @@ void Socket(const v8::FunctionCallbackInfo<v8::Value>& info) {
     return ThrowMessage(isolate, "type must be a Number");
   if (!info[2]->IsNumber())
     return ThrowMessage(isolate, "protocol must be a Number");
-  int socketfd = socket(info[0]->Int32Value(), info[1]->Int32Value(), info[2]->Int32Value());
+  int socketfd = socket(info[0]->Int32Value(context).FromMaybe(0), info[1]->Int32Value(context).FromMaybe(0), info[2]->Int32Value(context).FromMaybe(0));
   if (socketfd == -1) {
     ThrowErrno(isolate);
   } else {
@@ -193,6 +194,7 @@ void Socket(const v8::FunctionCallbackInfo<v8::Value>& info) {
 // int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 void Connect (const v8::FunctionCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = info.GetIsolate();
+  v8::Local<v8::Context> context = isolate->GetEnteredContext();
   if (info.Length() != 2)
     return ThrowMessage(isolate, "connect(sockfd, addr) expects 2 arguments");
   if (!info[0]->IsNumber())
@@ -202,7 +204,7 @@ void Connect (const v8::FunctionCallbackInfo<v8::Value>& info) {
   sockaddr* address = (sockaddr*) malloc(max_length);
   int length = ObjectToAddress(v8::Object::Cast(*info[1]), address);
   if (length != -1) {
-    if (connect(info[0]->Int32Value(), address, length) == -1) {
+    if (connect(info[0]->Int32Value(context).FromMaybe(0), address, length) == -1) {
       ThrowErrno(isolate);
     }
   }
@@ -213,6 +215,7 @@ void Connect (const v8::FunctionCallbackInfo<v8::Value>& info) {
 // int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 void Bind (const v8::FunctionCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = info.GetIsolate();
+  v8::Local<v8::Context> context = isolate->GetEnteredContext();
   if (info.Length() != 2)
     return ThrowMessage(isolate, "connect(sockfd, addr) expects 2 arguments");
   if (!info[0]->IsNumber())
@@ -220,7 +223,7 @@ void Bind (const v8::FunctionCallbackInfo<v8::Value>& info) {
   sockaddr* address = (sockaddr*) malloc(max_length);
   int length = ObjectToAddress(v8::Object::Cast(*info[1]), address);
   if (length != -1) {
-    if (bind(info[0]->Int32Value(), address, length) == -1) {
+    if (bind(info[0]->Int32Value(context).FromMaybe(0), address, length) == -1) {
       ThrowErrno(isolate);
     }
   }
@@ -231,13 +234,14 @@ void Bind (const v8::FunctionCallbackInfo<v8::Value>& info) {
 // int listen(int sockfd, int backlog);
 void Listen (const v8::FunctionCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = info.GetIsolate();
+  v8::Local<v8::Context> context = isolate->GetEnteredContext();
   if (info.Length() != 2)
     return ThrowMessage(isolate, "listen(sockfd, backlog) expects 2 arguments");
   if (!info[0]->IsNumber())
     return ThrowMessage(isolate, "sockfd must be a Number");
   if (!info[1]->IsNumber())
     return ThrowMessage(isolate, "backlog must be a Number");
-  if (listen(info[0]->Int32Value(), info[1]->Int32Value()) == -1) {
+  if (listen(info[0]->Int32Value(context).FromMaybe(0), info[1]->Int32Value(context).FromMaybe(0)) == -1) {
     ThrowErrno(isolate);
   }
 }
@@ -246,6 +250,7 @@ void Listen (const v8::FunctionCallbackInfo<v8::Value>& info) {
 // int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 void Accept (const v8::FunctionCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  v8::Local<v8::Context> context = isolate->GetEnteredContext();
   if (info.Length() != 2)
     return ThrowMessage(isolate, "accept(sockfd, addr) expects 2 arguments");
   if (!info[0]->IsNumber())
@@ -254,7 +259,7 @@ void Accept (const v8::FunctionCallbackInfo<v8::Value>& info) {
     return ThrowMessage(isolate, "addr must be an Object");
   sockaddr* address = (sockaddr*) malloc(max_length);
   socklen_t actual_length = max_length;
-  int sockfd = accept(info[0]->Int32Value(), address, &actual_length);
+  int sockfd = accept(info[0]->Int32Value(context).FromMaybe(0), address, &actual_length);
   if (sockfd == -1) {
     ThrowErrno(isolate);
   } else {
@@ -268,6 +273,7 @@ void Accept (const v8::FunctionCallbackInfo<v8::Value>& info) {
 // ssize_t send(int sockfd, void *buf, size_t len, int flags);
 void Send (const v8::FunctionCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  v8::Local<v8::Context> context = isolate->GetEnteredContext();
   if (info.Length() != 4)
     return ThrowMessage(isolate, "send(sockfd, buf, len, flags) expects 4 arguments");
   if (!info[0]->IsNumber())
@@ -278,7 +284,7 @@ void Send (const v8::FunctionCallbackInfo<v8::Value>& info) {
     return ThrowMessage(isolate, "len must be a number");
   if (!info[3]->IsNumber())
     return ThrowMessage(isolate, "flags must be a Number");
-  ssize_t size = send(info[0]->Int32Value(), v8::ArrayBuffer::Cast(*(info[1]))->GetContents().Data(), info[2]->Int32Value(), info[3]->Int32Value());
+  ssize_t size = send(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetContents().Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0));
   if (size == -1) {
     ThrowErrno(isolate);
   } else {
@@ -290,6 +296,7 @@ void Send (const v8::FunctionCallbackInfo<v8::Value>& info) {
 // ssize_t sendto(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen);
 void Sendto (const v8::FunctionCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  v8::Local<v8::Context> context = isolate->GetEnteredContext();
   if (info.Length() != 5)
     return ThrowMessage(isolate, "sendto(sockfd, buf, len, flags, dest_addr) expects 5 arguments");
   if (!info[0]->IsNumber())
@@ -305,7 +312,7 @@ void Sendto (const v8::FunctionCallbackInfo<v8::Value>& info) {
   sockaddr* address = (sockaddr*) malloc(max_length);
   int length = ObjectToAddress(v8::Object::Cast(*info[4]), address);
   if (length != -1) {
-    ssize_t size = sendto(info[0]->Int32Value(), v8::ArrayBuffer::Cast(*(info[1]))->GetContents().Data(), info[2]->Int32Value(), info[3]->Int32Value(), address, length);
+    ssize_t size = sendto(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetContents().Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0), address, length);
     if (size == -1) {
       ThrowErrno(isolate);
     } else {
@@ -320,6 +327,7 @@ void Sendto (const v8::FunctionCallbackInfo<v8::Value>& info) {
 // ssize_t recv(int sockfd, void *buf, size_t len, int flags);
 void Recv (const v8::FunctionCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  v8::Local<v8::Context> context = isolate->GetEnteredContext();
   if (info.Length() != 4)
     return ThrowMessage(isolate, "recv(sockfd, buf, len flags) expects 4 arguments");
   if (!info[0]->IsNumber())
@@ -330,7 +338,7 @@ void Recv (const v8::FunctionCallbackInfo<v8::Value>& info) {
     return ThrowMessage(isolate, "len must be a number");
   if (!info[3]->IsNumber())
     return ThrowMessage(isolate, "flags must be a Number");
-  ssize_t size = recv(info[0]->Int32Value(), v8::ArrayBuffer::Cast(*(info[1]))->GetContents().Data(), info[2]->Int32Value(), info[3]->Int32Value());
+  ssize_t size = recv(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetContents().Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0));
   if (size == -1) {
     ThrowErrno(isolate);
   } else {
@@ -342,6 +350,7 @@ void Recv (const v8::FunctionCallbackInfo<v8::Value>& info) {
 // ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen);
 void Recvfrom (const v8::FunctionCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  v8::Local<v8::Context> context = isolate->GetEnteredContext();
   if (info.Length() != 5)
     return ThrowMessage(isolate, "recvfrom(sockfd, buf, len, flags, src_addr) expects 4 arguments");
   if (!info[0]->IsNumber())
@@ -356,7 +365,7 @@ void Recvfrom (const v8::FunctionCallbackInfo<v8::Value>& info) {
     return ThrowMessage(isolate, "src_addr must be an object");
   sockaddr* address = (sockaddr*) malloc(max_length);
   socklen_t actual_length = max_length;
-  ssize_t size = recvfrom(info[0]->Int32Value(), v8::ArrayBuffer::Cast(*(info[1]))->GetContents().Data(), info[2]->Int32Value(), info[3]->Int32Value(), address, &actual_length);
+  ssize_t size = recvfrom(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetContents().Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0), address, &actual_length);
   if (size == -1) {
     ThrowErrno(isolate);
   } else {
@@ -370,11 +379,12 @@ void Recvfrom (const v8::FunctionCallbackInfo<v8::Value>& info) {
 // int close(int fd);
 void Close (const v8::FunctionCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  v8::Local<v8::Context> context = isolate->GetEnteredContext();
   if (info.Length() != 1)
     return ThrowMessage(isolate, "close(fd) expects 1 argument");
   if (!info[0]->IsNumber())
     return ThrowMessage(isolate, "fd must be a Number");
-  if (close(info[0]->Int32Value()) == -1) {
+  if (close(info[0]->Int32Value(context).FromMaybe(0)) == -1) {
     ThrowErrno(isolate);
   }
 }
@@ -383,13 +393,14 @@ void Close (const v8::FunctionCallbackInfo<v8::Value>& info) {
 // int shutdown(int sockfd, int how);
 void Shutdown (const v8::FunctionCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  v8::Local<v8::Context> context = isolate->GetEnteredContext();
   if (info.Length() != 2)
     return ThrowMessage(isolate, "shutdown(sockfd, how) expects 2 argument");
   if (!info[0]->IsNumber())
     return ThrowMessage(isolate, "sockfd must be a Number");
   if (!info[1]->IsNumber())
     return ThrowMessage(isolate, "how must be a Number");
-  if (shutdown(info[0]->Int32Value(), info[1]->Int32Value()) == -1) {
+  if (shutdown(info[0]->Int32Value(context).FromMaybe(0), info[1]->Int32Value(context).FromMaybe(0)) == -1) {
     ThrowErrno(isolate);
   }
 }
@@ -398,6 +409,7 @@ void Shutdown (const v8::FunctionCallbackInfo<v8::Value>& info) {
 // int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
 void Getsockopt (const v8::FunctionCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  v8::Local<v8::Context> context = isolate->GetEnteredContext();
   if (info.Length() != 2)
     return ThrowMessage(isolate, "getsockopt(sockfd, level, optname) expects 3 argument");
   if (!info[0]->IsNumber())
@@ -408,7 +420,7 @@ void Getsockopt (const v8::FunctionCallbackInfo<v8::Value>& info) {
     return ThrowMessage(isolate, "optname must be a Number");
   int optval;
   socklen_t optlen = sizeof(int);
-  if (getsockopt(info[0]->Int32Value(), info[1]->Int32Value(), info[2]->Int32Value(), (void *) &optval, &optlen) == -1) {
+  if (getsockopt(info[0]->Int32Value(context).FromMaybe(0), info[1]->Int32Value(context).FromMaybe(0), info[2]->Int32Value(context).FromMaybe(0), (void *) &optval, &optlen) == -1) {
     ThrowErrno(isolate);
   } else {
     info.GetReturnValue().Set(v8::Integer::New(isolate, optval));
@@ -419,6 +431,7 @@ void Getsockopt (const v8::FunctionCallbackInfo<v8::Value>& info) {
 // int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
 void Setsockopt (const v8::FunctionCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  v8::Local<v8::Context> context = isolate->GetEnteredContext();
   if (info.Length() != 4)
     return ThrowMessage(isolate, "getsockopt(sockfd, level, optname, optval) expects 4 argument");
   if (!info[0]->IsNumber())
@@ -429,9 +442,9 @@ void Setsockopt (const v8::FunctionCallbackInfo<v8::Value>& info) {
     return ThrowMessage(isolate, "optname must be a Number");
   if (!info[3]->IsNumber())
     return ThrowMessage(isolate, "optval must be a Number");
-  int optval = info[0]->Int32Value();
+  int optval = info[0]->Int32Value(context).FromMaybe(0);
   socklen_t optlen = sizeof(int);
-  if (setsockopt(info[0]->Int32Value(), info[1]->Int32Value(), info[2]->Int32Value(), (void *) &optval, optlen) == -1) {
+  if (setsockopt(info[0]->Int32Value(context).FromMaybe(0), info[1]->Int32Value(context).FromMaybe(0), info[2]->Int32Value(context).FromMaybe(0), (void *) &optval, optlen) == -1) {
     ThrowErrno(isolate);
   }
 }
