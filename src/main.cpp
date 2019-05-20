@@ -37,14 +37,15 @@
 #include <arpa/inet.h>
 #include <iostream>
 #include <node.h>
+#include <cstring>
 
 static size_t max_length;
 
 void ThrowErrno (v8::Isolate* isolate) {
   char string[100];
   snprintf(string, 100, "ERRNO %i: %s", errno, std::strerror(errno));
-  v8::Local<v8::Object> error = v8::Exception::Error(v8::String::NewFromUtf8(isolate, string))->ToObject();
   v8::Local<v8::Context> context = isolate->GetEnteredContext();
+  v8::Local<v8::Object> error = v8::Exception::Error(v8::String::NewFromUtf8(isolate, string))->ToObject(context).ToLocalChecked();
   error->Set(context, v8::String::NewFromUtf8(isolate, "errno"), v8::Number::New(isolate, errno)).FromJust();
   error->Set(context, v8::String::NewFromUtf8(isolate, "code"), v8::String::NewFromUtf8(isolate, std::strerror(errno))).FromJust();
   isolate->ThrowException(error);
