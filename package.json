@@ -1,14 +1,14 @@
 {
   "name": "posix-socket",
   "description": "POSIX Socket API on nodeJS",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {
     "name": "Laurent Christophe",
     "email": "lachrist@vub.ac.be"
   },
   "main": "./lib/main.js",
   "engines": {
-    "node": ">=14.16.1"
+    "node": ">=14.0.0"
   },
   "repository": "lachrist/posix-socket",
   "homepage": "http://github.com/lachrist/posix-socket",
