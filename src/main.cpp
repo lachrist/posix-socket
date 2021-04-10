@@ -289,7 +289,7 @@ void Send (const v8::FunctionCallbackInfo<v8::Value>& info) {
     return ThrowMessage(isolate, "len must be a number");
   if (!info[3]->IsNumber())
     return ThrowMessage(isolate, "flags must be a Number");
-  ssize_t size = send(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetContents().Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0));
+  ssize_t size = send(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetBackingStore()->Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0));
   if (size == -1) {
     ThrowErrno(isolate);
   } else {
@@ -317,7 +317,7 @@ void Sendto (const v8::FunctionCallbackInfo<v8::Value>& info) {
   sockaddr* address = (sockaddr*) malloc(max_length);
   int length = ObjectToAddress(v8::Object::Cast(*info[4]), address);
   if (length != -1) {
-    ssize_t size = sendto(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetContents().Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0), address, length);
+    ssize_t size = sendto(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetBackingStore()->Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0), address, length);
     if (size == -1) {
       ThrowErrno(isolate);
     } else {
@@ -343,7 +343,7 @@ void Recv (const v8::FunctionCallbackInfo<v8::Value>& info) {
     return ThrowMessage(isolate, "len must be a number");
   if (!info[3]->IsNumber())
     return ThrowMessage(isolate, "flags must be a Number");
-  ssize_t size = recv(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetContents().Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0));
+  ssize_t size = recv(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetBackingStore()->Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0));
   if (size == -1) {
     ThrowErrno(isolate);
   } else {
@@ -370,7 +370,7 @@ void Recvfrom (const v8::FunctionCallbackInfo<v8::Value>& info) {
     return ThrowMessage(isolate, "src_addr must be an object");
   sockaddr* address = (sockaddr*) malloc(max_length);
   socklen_t actual_length = max_length;
-  ssize_t size = recvfrom(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetContents().Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0), address, &actual_length);
+  ssize_t size = recvfrom(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetBackingStore()->Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0), address, &actual_length);
   if (size == -1) {
     ThrowErrno(isolate);
   } else {

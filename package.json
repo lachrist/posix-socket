@@ -1,13 +1,15 @@
 {
   "name": "posix-socket",
   "description": "POSIX Socket API on nodeJS",
-  "version": "0.0.11",
+  "version": "1.0.0",
   "author": {
     "name": "Laurent Christophe",
     "email": "lachrist@vub.ac.be"
   },
   "main": "./lib/main.js",
-  "engines" : { "node" : ">=10.16.3" },
+  "engines": {
+    "node": ">=14.16.1"
+  },
   "repository": "lachrist/posix-socket",
   "homepage": "http://github.com/lachrist/posix-socket",
   "license": "MIT",
@@ -19,5 +21,8 @@
     "Synchronous",
     "Low-Level"
   ],
-  "gypfile": true
+  "gypfile": true,
+  "devDependencies": {
+    "node-gyp": "^8.0.0"
+  }
 }
