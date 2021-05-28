@@ -19,9 +19,9 @@ Differences with the POSIX Socket API:
 
 1. Socket addresses are specified as JavaScript objects.
    Currently, only three address families are supported:
-   * Local/Unix (`sockaddr_un`): `{sun_family:1, sun_path:}`.
+   * Local/Unix (`sockaddr_un`): `{sun_family:1, sun_path:"path/to/unix-sock.sock"}`.
    * Inet (`sockaddr_in`): `{sin_family:2, sin_port:8080, sin_addr:"127.0.0.1"}`.
-   * Inet6 (sockaddr_in6): `{sin6_family:24, sin6_port:8080, sin6_flowinfo:0, sin6_addr:"::1", sin6_scope_id:0}`.
+   * Inet6 (`sockaddr_in6`): `{sin6_family:24, sin6_port:8080, sin6_flowinfo:0, sin6_addr:"::1", sin6_scope_id:0}`.
 2. The length of socket addresses is computed by the module.
 3. In `getsockopt` and `setsockopt`: `optval` can only be a number.
 

@@ -39,6 +39,18 @@
 #include <node.h>
 #include <cstring>
 
+#if NODE_MAJOR_VERSION < 12
+  #define GET_DATA(buffer) (NULL)
+  #error "node version must be >= 12.0.0 (end-of-life)"
+#elif NODE_MAJOR_VERSION == 13
+  #define GET_DATA(buffer) (NULL)
+  #error "node version cannot be 13.x.x (end-of-life)"
+#elif (NODE_MAJOR_VERSION == 12)
+  #define GET_DATA(buffer) (buffer->GetContents().Data())
+#else
+  #define GET_DATA(buffer) (buffer->GetBackingStore()->Data())
+#endif
+
 static size_t max_length;
 
 void ThrowErrno (v8::Isolate* isolate) {
@@ -166,14 +178,6 @@ void AddressToObject (sockaddr* address, v8::Object* object) {
   }
 }
 
-// void TEST_IDENTITY (const v8::FunctionCallbackInfo<v8::Value>& info) {
-//   v8::Isolate* isolate = info.GetIsolate();
-//   sockaddr* address = (sockaddr*) malloc(max_length);
-//   ObjectToAddress(v8::Object::Cast(*info[0]), address);
-//   AddressToObject(address, v8::Object::Cast(*info[1]));
-//   free(address);
-// };
-
 // http://man7.org/linux/man-pages/man2/socket.2.html
 // int socket(int domain, int type, int protocol);
 void Socket(const v8::FunctionCallbackInfo<v8::Value>& info) {
@@ -289,7 +293,7 @@ void Send (const v8::FunctionCallbackInfo<v8::Value>& info) {
     return ThrowMessage(isolate, "len must be a number");
   if (!info[3]->IsNumber())
     return ThrowMessage(isolate, "flags must be a Number");
-  ssize_t size = send(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetBackingStore()->Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0));
+  ssize_t size = send(info[0]->Int32Value(context).FromMaybe(0), GET_DATA(v8::ArrayBuffer::Cast(*(info[1]))), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0));
   if (size == -1) {
     ThrowErrno(isolate);
   } else {
@@ -317,7 +321,7 @@ void Sendto (const v8::FunctionCallbackInfo<v8::Value>& info) {
   sockaddr* address = (sockaddr*) malloc(max_length);
   int length = ObjectToAddress(v8::Object::Cast(*info[4]), address);
   if (length != -1) {
-    ssize_t size = sendto(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetBackingStore()->Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0), address, length);
+    ssize_t size = sendto(info[0]->Int32Value(context).FromMaybe(0), GET_DATA(v8::ArrayBuffer::Cast(*(info[1]))), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0), address, length);
     if (size == -1) {
       ThrowErrno(isolate);
     } else {
@@ -343,7 +347,7 @@ void Recv (const v8::FunctionCallbackInfo<v8::Value>& info) {
     return ThrowMessage(isolate, "len must be a number");
   if (!info[3]->IsNumber())
     return ThrowMessage(isolate, "flags must be a Number");
-  ssize_t size = recv(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetBackingStore()->Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0));
+  ssize_t size = recv(info[0]->Int32Value(context).FromMaybe(0), GET_DATA(v8::ArrayBuffer::Cast(*(info[1]))), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0));
   if (size == -1) {
     ThrowErrno(isolate);
   } else {
@@ -370,7 +374,7 @@ void Recvfrom (const v8::FunctionCallbackInfo<v8::Value>& info) {
     return ThrowMessage(isolate, "src_addr must be an object");
   sockaddr* address = (sockaddr*) malloc(max_length);
   socklen_t actual_length = max_length;
-  ssize_t size = recvfrom(info[0]->Int32Value(context).FromMaybe(0), v8::ArrayBuffer::Cast(*(info[1]))->GetBackingStore()->Data(), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0), address, &actual_length);
+  ssize_t size = recvfrom(info[0]->Int32Value(context).FromMaybe(0), GET_DATA(v8::ArrayBuffer::Cast(*(info[1]))), info[2]->Int32Value(context).FromMaybe(0), info[3]->Int32Value(context).FromMaybe(0), address, &actual_length);
   if (size == -1) {
     ThrowErrno(isolate);
   } else {

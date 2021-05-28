@@ -1,3 +1,4 @@
+console.log(`node version = ${process.version}`);
 const PosixSocket = require("../lib/main.js");
 const Addresses = require("./addresses.js");
 const sockfd = PosixSocket.socket(PosixSocket[process.argv[2]], PosixSocket.SOCK_STREAM, 0);
