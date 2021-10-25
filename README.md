@@ -69,3 +69,8 @@ for (let i = 0; i<string.length; i++)
 PosixSocket.send(sockfd, buffer, string.length*view.BYTES_PER_ELEMENT, 0);
 PosixSocket.close(sockfd);
 ```
+
+## Troubleshooting
+
+https://github.com/nodejs/node-gyp/blob/master/macOS_Catalina.md
+
