@@ -1,7 +1,7 @@
 {
   "name": "posix-socket",
   "description": "POSIX Socket API on nodeJS",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": {
     "name": "Laurent Christophe",
     "email": "lachrist@vub.ac.be"
@@ -29,6 +29,6 @@
   },
   "gypfile": true,
   "devDependencies": {
-    "node-gyp": "^8.1.0"
+    "node-gyp": "^8.3.0"
   }
 }
