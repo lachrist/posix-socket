@@ -21,14 +21,16 @@
     "Synchronous",
     "Low-Level"
   ],
-  "scripts": {
-    "test": "npm run test12 && npm run test14",
-    "test12": "npx node-gyp rebuild --target=v12.22.1 && source ~/.nvm/nvm.sh && nvm use 12.22.1 && npm run run-test",
-    "test14": "npx node-gyp rebuild --target=v14.17.0 && source ~/.nvm/nvm.sh && nvm use 14.17.0 && npm run run-test",
-    "run-test": "sh -c 'cd test && sh run.sh'"
-  },
   "gypfile": true,
-  "devDependencies": {
-    "node-gyp": "^8.3.0"
+  "dependencies": {
+    "node-gyp": "^8.4.0"
+  },
+  "scripts": {
+    "test": "sh -c 'cd test && sh run.sh'",
+    "test-rebuild": "npx node-gyp rebuild && npm run test",
+    "test-12": "source ~/.nvm/nvm.sh && nvm use 12 && npm run test-rebuild",
+    "test-14": "source ~/.nvm/nvm.sh && nvm use 14 && npm run test-rebuild",
+    "test-16": "source ~/.nvm/nvm.sh && nvm use 16 && npm run test-rebuild",
+    "test-all": "npm run test-12 && npm run test-14 && npm run test-16"
   }
 }
