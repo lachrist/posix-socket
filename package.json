@@ -22,11 +22,11 @@
     "Synchronous",
     "Low-Level"
   ],
-  "gypfile": true,
   "dependencies": {
     "node-gyp": "^8.4.0"
   },
   "scripts": {
+    "install": "npx node-gyp rebuild",
     "test": "sh -c 'cd test && sh run.sh'",
     "test-rebuild": "npx node-gyp rebuild && npm run test",
     "test-12": "source ~/.nvm/nvm.sh && nvm use 12 && npm run test-rebuild",
